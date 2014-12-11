@@ -1,0 +1,9 @@
+#!/bin/bash
+
+IFS=$(echo -en "\n\b")
+for i in `vmrun list | grep vmx$`
+do
+    vmx=`basename $i`
+    ip=`vmrun getGuestIpAddress $i`
+    printf '%-15s : %-55s\n' $ip $vmx
+done
