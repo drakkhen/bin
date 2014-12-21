@@ -3,6 +3,15 @@
 plugged_in=`ioreg -c AppleSmartBattery | grep ExternalConnected | sed -e 's/^.* //'`
 perc=`ioreg -c AppleSmartBattery | egrep "(Current|Max)Capacity" | tr '\n' ' | ' | awk '{printf("%.2f", $10/$5 * 100)}'`
 perc_int=${perc/.*}
+blink_file="/tmp/.blinker"
+
+blink=""
+if [[ -e $blink_file ]]; then
+  blink=",reverse"
+  rm $blink_file
+else
+  touch $blink_file
+fi
 
 if [ $plugged_in == "Yes" ]; then
     is_charging=`ioreg -c AppleSmartBattery | grep IsCharging | sed -e 's/^.* //'`
@@ -17,17 +26,19 @@ else
 fi
 
 if [ $perc_int -le 5 ]; then
-    perc_color='red,reverse'
+    perc_color="red$blink"
 elif [ $perc_int -le 10 ]; then
-    perc_color='red'
-elif [ $perc_int -le 30 ]; then
-    perc_color='yellow'
+    perc_color="red,reverse"
+elif [ $perc_int -le 25 ]; then
+    perc_color="#ff8000"
+elif [ $perc_int -le 50 ]; then
+    perc_color="yellow"
 else
-    perc_color='green'
+    perc_color="green"
 fi
 
-if [ $perc_int -le 10 ]; then
-    warning=" #[fg=red]⚠"
+if [ $perc_int -le 5 ]; then
+    warning=" #[fg=red]⚠ "
 fi
 
-echo "#[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%#[noreverse]$warning"
+echo "#[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%$warning"
