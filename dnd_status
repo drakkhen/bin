@@ -1,0 +1,3 @@
+#!/bin/bash
+
+defaults read /Users/drakkhen/Library/Preferences/ByHost/com.apple.notificationcenterui.*.plist doNotDisturb | grep -q 1 && echo " #[fg=#500000]| #[fg=blue,bright]DnD"
