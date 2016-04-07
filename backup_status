@@ -3,7 +3,6 @@
 TIME_SINCE_LONG="#[fg=red]!!!"
 TIME_SINCE_MEDIUM="#[fg=yellow]!!"
 TIME_SINCE_SHORT=""
-BACKUP_DRIVE_VOLUME="Sherbourne TimeMachine"
 BACKUP_DRIVE_MOUNTED=""
 BACKUP_DRIVE_UNMOUNTED="🚫"
 
@@ -18,7 +17,7 @@ function time_since() {
     sub_minutes=$((minutes%60))
 }
 
-mount | grep "$BACKUP_DRIVE_VOLUME" &> /dev/null
+ls "`tmutil machinedirectory`" &> /dev/null
 backup_drive_mounted=$?
 
 if [ $backup_drive_mounted -eq 0 ]; then
