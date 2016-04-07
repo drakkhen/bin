@@ -1,0 +1,22 @@
+#!/usr/bin/osascript
+property ScriptName : "Set Skype Status"
+
+if application "Skype" is running then
+    set userStatus to (run script "tell application \"Skype\"
+        set userStatus to send command \"GET USERSTATUS\" script name \"SKYPE STATUS\"
+    end tell")
+
+    if userStatus is equal to "USERSTATUS ONLINE" then
+       do shell script "echo ' #[fg=#500000]| ✅ '"
+    else if userStatus is equal to "USERSTATUS AWAY" then
+       do shell script "echo ' #[fg=#500000]| 🌙 '"
+    else if userStatus is equal to "USERSTATUS DND" then
+       do shell script "echo ' #[fg=#500000]| 🚫 '"
+    else if userStatus is equal to "USERSTATUS INVISIBLE" then
+       do shell script "echo ' #[fg=#500000]| 👻 '"
+    else if userStatus is equal to "USERSTATUS OFFLINE" then
+       do shell script "echo ' #[fg=#500000]| 💀 '"
+    else
+        return userStatus
+    end if
+end
