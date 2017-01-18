@@ -4,7 +4,7 @@
 LAST_BACKUP_TS=~/.last_timemachine_backup
 
 # symbol/text shown when drive is not mounted
-NOT_MOUNTED_SYMBOL="🚫 "
+NOT_MOUNTED_SYMBOL="#[fg=red]⏏#[fg=default] "
 
 # what is considered to be a "long time" or "medium time" (in hours)
 A_LONG_TIME=24
@@ -12,13 +12,13 @@ A_MEDIUM_TIME=4
 
 # optional prefixes and suffixes
 STOPPING_PREFIX="#[fg=yellow]"
-STOPPING_SUFFIX=""
+STOPPING_SUFFIX="#[fg=default]"
 RUNNING_PREFIX="#[fg=green]"
-RUNNING_SUFFIX=""
+RUNNING_SUFFIX="#[fg=default]"
 TIME_SINCE_LONG_PREFIX="#[fg=red]"
-TIME_SINCE_LONG_SUFFIX=""
+TIME_SINCE_LONG_SUFFIX="#[fg=default]"
 TIME_SINCE_MEDIUM_PREFIX="#[fg=yellow]"
-TIME_SINCE_MEDIUM_SUFFIX=""
+TIME_SINCE_MEDIUM_SUFFIX="#[fg=default]"
 TIME_SINCE_SHORT_PREFIX=""
 TIME_SINCE_SHORT_SUFFIX=""
 
