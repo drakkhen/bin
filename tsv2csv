@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+require 'csv'
+
+begin
+  CSV($stdin, :col_sep => "\t") do |csv_in|
+    csv_in.each do |row|
+      puts row.to_csv
+    end
+  end
+rescue Errno::EPIPE
+end
