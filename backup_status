@@ -4,7 +4,7 @@
 LAST_BACKUP_TS=~/.last_timemachine_backup
 
 # symbol/text shown when drive is not mounted
-NOT_MOUNTED_SYMBOL="#[fg=red]⏏#[fg=default] "
+NOT_MOUNTED_SYMBOL=" #[fg=red]⏏#[fg=default] "
 
 # what is considered to be a "long time" or "medium time" (in hours)
 A_LONG_TIME=24
