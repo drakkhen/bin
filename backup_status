@@ -57,17 +57,17 @@ then
     # see if it's Stopping or Running
     if [[ $(tmutil_status_value Stopping) -eq 1 ]]
     then
-        echo -ne "${STOPPING_PREFIX}Stopping${STOPPING_SUFFIX}"
+        echo -ne " ${STOPPING_PREFIX}Stopping${STOPPING_SUFFIX}"
         exit
     elif [[ $(tmutil_status_value Running) -eq 1 ]]
     then
-        echo -ne "${RUNNING_PREFIX}$(tmutil_status_value BackupPhase)${RUNNING_SUFFIX}"
+        echo -ne " ${RUNNING_PREFIX}$(tmutil_status_value BackupPhase)${RUNNING_SUFFIX}"
         exit
     fi
 else
     # it's NOT mounted; set $latest_backup from contents of $LAST_BACKUP_TS
     latest_backup=$(cat $LAST_BACKUP_TS)
-    echo -en "$NOT_MOUNTED_SYMBOL"
+    echo -en " $NOT_MOUNTED_SYMBOL"
 fi
 
 # make sure $latest_backup is numeric before trying to do math on it
@@ -109,4 +109,4 @@ fi
 formatted_time=$(printf "${formatted_time}${remainder_hours}:%02d" "${remainder_minutes}")
 
 # print the result
-echo -en "${prefix}${formatted_time}${suffix}"
+echo -en " ${prefix}${formatted_time}${suffix}"

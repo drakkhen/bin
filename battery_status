@@ -38,7 +38,7 @@ else
 fi
 
 if [ $perc_int -le 5 ]; then
-    warning=" #[fg=red]⚠ "
+    warning="#[fg=red]⚠ "
 fi
 
-echo "#[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%$warning"
+echo " #[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%$warning"
