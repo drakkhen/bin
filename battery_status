@@ -1,7 +1,7 @@
 #!/bin/bash
 
 plugged_in=`ioreg -c AppleSmartBattery | grep ExternalConnected | sed -e 's/^.* //'`
-perc=`ioreg -c AppleSmartBattery | egrep "(Current|Max)Capacity" | tr '\n' ' | ' | awk '{printf("%.2f", $10/$5 * 100)}'`
+perc=`ioreg -c AppleSmartBattery | egrep '"(Max|Current)Capacity"' | awk -F= '{print $2}' | sort -n | tr '\n' ' ' | awk '{printf("%.2f", $1/$2 * 100)}'`
 perc_int=${perc/.*}
 blink_file="/tmp/.blinker"
 
