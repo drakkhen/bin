@@ -1,3 +1,0 @@
-#!/bin/bash
-
-viscosity list | grep Connected | ifne echo ' #[fg=cyan,reverse] VPN #[default,noreverse]'

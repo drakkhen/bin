@@ -1,0 +1,59 @@
+#!/bin/bash
+
+battery_status () {
+    plugged_in=$(ioreg -c AppleSmartBattery | grep ExternalConnected | sed -e 's/^.* //')
+    perc=$(ioreg -c AppleSmartBattery | egrep '"(Max|Current)Capacity"' | awk -F= '{print $2}' | sort -n | tr '\n' ' ' | awk '{printf("%.2f", $1/$2 * 100)}')
+    perc_int=${perc/.*}
+    blink_file="/tmp/.blinker"
+
+    blink=""
+    if [[ -e $blink_file ]]; then
+      blink=",reverse"
+      rm $blink_file
+    else
+      touch $blink_file
+    fi
+
+    if [ $plugged_in == "Yes" ]; then
+        is_charging=$(ioreg -c AppleSmartBattery | grep IsCharging | sed -e 's/^.* //')
+
+        if [ $is_charging == "Yes" ]; then
+            status_color='#ff8000'
+        else
+            status_color='green,bright'
+        fi
+    else
+        status_color='black,bright'
+    fi
+
+    if [ $perc_int -le 5 ]; then
+        perc_color="red$blink"
+    elif [ $perc_int -le 10 ]; then
+        perc_color="red,reverse"
+    elif [ $perc_int -le 25 ]; then
+        perc_color="#ff8000"
+    elif [ $perc_int -le 50 ]; then
+        perc_color="yellow"
+    else
+        perc_color="green"
+    fi
+
+    if [ $perc_int -le 5 ]; then
+        warning="#[fg=red]⚠ "
+    fi
+
+    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%$warning"
+}
+
+DELIMITER="#[fg=#500000]|"
+
+dnd_status () {
+    defaults -currentHost read com.apple.notificationcenterui doNotDisturb | grep -q 1 && echo -n " $DELIMITER #[fg=blue,bright]DnD"
+}
+
+echo -n "$DELIMITER #[fg=default]"
+echo -n "$(sysctl -n vm.loadavg | cut -f 2,3,4 -d\ ) "
+echo -n "$DELIMITER "
+battery_status
+dnd_status
+echo

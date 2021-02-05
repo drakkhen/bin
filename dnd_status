@@ -1,3 +1,0 @@
-#!/bin/bash
-
-defaults -currentHost read com.apple.notificationcenterui doNotDisturb | grep -q 1 && echo " #[fg=#500000]| #[fg=blue,bright]DnD"

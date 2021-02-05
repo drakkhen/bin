@@ -1,5 +1,0 @@
-#!/bin/bash
-
-format=${2:-"%H:%M"}
-
-echo -n "$(TZ=$1 date +$format)"

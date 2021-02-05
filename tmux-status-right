@@ -1,0 +1,144 @@
+#!/bin/bash
+
+viscosity_status () {
+    viscosity list | grep Connected | ifne echo -n '#[fg=cyan,reverse] VPN #[default,noreverse]'
+}
+
+backup_status () {
+    # path to file used to persist last backup timestamp
+    LAST_BACKUP_TS=~/.last_timemachine_backup
+
+    # symbol/text shown when drive is not mounted
+    NOT_MOUNTED_SYMBOL=" #[fg=red]⏏#[fg=default] "
+
+    # what is considered to be a "long time" or "medium time" (in hours)
+    A_LONG_TIME=24
+    A_MEDIUM_TIME=4
+
+    # optional prefixes and suffixes
+    STOPPING_PREFIX="#[fg=yellow]"
+    STOPPING_SUFFIX="#[fg=default]"
+    RUNNING_PREFIX="#[fg=green]"
+    RUNNING_SUFFIX="#[fg=default]"
+    TIME_SINCE_LONG_PREFIX="#[fg=red]"
+    TIME_SINCE_LONG_SUFFIX="#[fg=default]"
+    TIME_SINCE_MEDIUM_PREFIX="#[fg=yellow]"
+    TIME_SINCE_MEDIUM_SUFFIX="#[fg=default]"
+    TIME_SINCE_SHORT_PREFIX=""
+    TIME_SINCE_SHORT_SUFFIX=""
+
+    function time_since() {
+        now=$(date +%s)
+        compared_time=$1
+        seconds_since=$((now - $compared_time))
+        minutes=$((seconds_since / 60))
+        hours=$((seconds_since / 3600))
+        days=$((seconds_since / 86400))
+        remainder_hours=$((hours % 24))
+        remainder_minutes=$((minutes % 60))
+    }
+
+    function tmutil_status_value() {
+        line=$(tmutil status | grep " $1 = ")
+        if [ ! $? -eq 0 ]
+        then
+            # did not find a value
+            return -1
+        fi
+
+        echo -n $line | awk -F' = ' '{print $2}' | awk -F\; '{print $1}'
+    }
+
+    # see if the TimeMachine volume is mounted
+    tmutil machinedirectory > /dev/null 2> /dev/null
+    backup_drive_mounted=$?
+
+    if [ $backup_drive_mounted -eq 0 ]
+    then
+        # it's mounted; update $LAST_BACKUP_TS file's contents
+        latest_backup=$(stat -f "%Sm" -t %s "$(tmutil latestbackup 2> /dev/null)")
+        echo -n $latest_backup > $LAST_BACKUP_TS
+
+        # see if it's Stopping or Running
+        if [[ $(tmutil_status_value Stopping) -eq 1 ]]
+        then
+            echo -ne " ${STOPPING_PREFIX}Stopping${STOPPING_SUFFIX}"
+            exit
+        elif [[ $(tmutil_status_value Running) -eq 1 ]]
+        then
+            echo -ne " ${RUNNING_PREFIX}$(tmutil_status_value BackupPhase)${RUNNING_SUFFIX}"
+            exit
+        fi
+    else
+        # it's NOT mounted; set $latest_backup from contents of $LAST_BACKUP_TS
+        latest_backup=$(cat $LAST_BACKUP_TS)
+        echo -en " $NOT_MOUNTED_SYMBOL"
+    fi
+
+    # make sure $latest_backup is numeric before trying to do math on it
+    if [[ ! $latest_backup =~ ^-?[0-9]+$ ]]
+    then
+        exit
+    fi
+
+    #
+    # determine prefix/suffix based on how many hours have passed since last backup
+    #
+
+    # get days, hours, minutes via time_since
+    time_since $latest_backup
+
+    # default to short prefix/suffix
+    prefix=$TIME_SINCE_SHORT_PREFIX
+    suffix=$TIME_SINCE_SHORT_SUFFIX
+
+    if [ $hours -gt $A_LONG_TIME ]
+    then
+        # it's been a long time
+        prefix=$TIME_SINCE_LONG_PREFIX
+        suffix=$TIME_SINCE_LONG_SUFFIX
+    elif [ $hours -gt $A_MEDIUM_TIME ]
+    then
+        # it's been a medium time
+        prefix=$TIME_SINCE_MEDIUM_PREFIX
+        suffix=$TIME_SINCE_MEDIUM_SUFFIX
+    fi
+
+    # format time shown based on how long it's been
+    formatted_time=""
+
+    if [ $hours -gt 24 ]; then
+        formatted_time="${days}d "
+    fi
+
+    formatted_time=$(printf "${formatted_time}${remainder_hours}:%02d" "${remainder_minutes}")
+
+    # print the result
+    echo -en " ${prefix}${formatted_time}${suffix}"
+}
+
+timezone_clock () {
+    export TZ
+    echo -n "#[fg=#606060]"
+
+    TZ='America/Los_Angeles'
+    echo -n "$(date +'%H') "
+
+    TZ='America/Denver'
+    echo -n "$(date +'%H') "
+
+    TZ='America/Chicago'
+    echo -n "$(date +'%H') "
+
+    TZ='America/New_York'
+    echo -n "#[fg=#ffa000]$(date +'%b%d %H:%M') "
+
+    TZ='UTC'
+    echo -n "#[fg=#ff0000,bright]$(date +'%H')"
+}
+
+viscosity_status
+#backup_status
+echo -n " #[fg=#500000]| "
+timezone_clock
+echo
