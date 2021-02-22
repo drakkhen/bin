@@ -1,0 +1,23 @@
+#!/bin/bash
+
+IFS=$(echo -en "\n\b")
+vmx_list=`vmrun list | egrep '\.vmx$'`
+
+echo '{'
+echo '  "_meta": { }'
+echo '  "instances": ['
+
+for vmx in $vmx_list
+do
+    hname=`basename -s .vmx $vmx`
+
+    if [ $vmx == "${vmx_list[${#vmx_list[@]} - 1]}" ]
+    then
+        echo "    \"$hname\""
+    else
+        echo "    \"$hname\","
+    fi
+done
+
+echo "  ]"
+echo '}'
