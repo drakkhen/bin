@@ -1,9 +1,9 @@
 #!/bin/bash
 
 IFS=$(echo -en "\n\b")
-for i in `vmrun list | grep vmx$`
+for vmx in `vmrun list | egrep -i '\.vmx$'`
 do
-    vmx=`basename $i`
-    ip=`vmrun getGuestIpAddress $i`
-    printf '%-15s : %-55s\n' $ip $vmx
+    hname=`basename -s .vmx $vmx`
+    ip=`vmrun getGuestIpAddress $vmx`
+    echo "$ip  $hname"
 done
