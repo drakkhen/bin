@@ -2,25 +2,59 @@
 
 import json
 import os
+import socket
 import subprocess
+
+DOMAIN = 'vm'
+
+def ip_of_vmx(vmx):
+    p = subprocess.run(['vmrun', 'getGuestIpAddress', vmx], capture_output=True)
+    ip = p.stdout.splitlines()[0].decode('utf8')
+    try:
+        socket.inet_aton(ip)
+        return ip
+    except socket.error:
+        return None
+
+def hostname_of_ip(given_ip):
+    lease_path = '/usr/local/var/lib/misc/dnsmasq/dnsmasq.leases'
+    for l in open(lease_path, 'r').readlines():
+        expiry, mac, ip, hname, client_id = l.split()
+        if ip == given_ip:
+            return "%s.%s" % (hname, DOMAIN)
+    return None
+
+def vms():
+    p = subprocess.run(['vmrun', 'list'], capture_output=True)
+    for vmx in p.stdout.splitlines():
+        vmx = vmx.decode('utf-8')
+        if vmx.startswith('Total running VMs:'):
+            continue
+
+        ip = ip_of_vmx(vmx)
+        hostname = hostname_of_ip(ip)
+
+        filename = os.path.basename(vmx)
+        is_base_instance = filename.startswith('_')
+
+        yield {
+            'vmx': vmx,
+            'ip': ip,
+            'hostname': hostname,
+            'is_base_instance': is_base_instance
+        }
+
 
 if __name__ == '__main__':
     base_instances = []
     instances = []
 
-    p = subprocess.run(['vmrun', 'list'], capture_output=True)
-    for l in p.stdout.splitlines():
-        l = l.decode('utf-8')
-        if l.startswith('Total running VMs:'):
-            continue
-
-        vmx = os.path.basename(l)
-        hname = os.path.splitext(vmx)[0]
-
-        if hname.startswith('_'):
-            base_instances.append(hname[1:])
+    for vm in vms():
+        res = vm['hostname'] or vm['ip']
+        if vm['is_base_instance']:
+            base_instances.append(res)
         else:
-            instances.append(hname)
+            instances.append(res)
 
     print(json.dumps({
         '_meta': {},
