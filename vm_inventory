@@ -1,23 +1,29 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-IFS=$(echo -en "\n\b")
-vmx_list=`vmrun list | egrep '\.vmx$'`
+import json
+import os
+import subprocess
 
-echo '{'
-echo '  "_meta": { }'
-echo '  "instances": ['
+if __name__ == '__main__':
+    base_instances = []
+    instances = []
 
-for vmx in $vmx_list
-do
-    hname=`basename -s .vmx $vmx`
+    p = subprocess.run(['vmrun', 'list'], capture_output=True)
+    for l in p.stdout.splitlines():
+        l = l.decode('utf-8')
+        if l.startswith('Total running VMs:'):
+            continue
 
-    if [ $vmx == "${vmx_list[${#vmx_list[@]} - 1]}" ]
-    then
-        echo "    \"$hname\""
-    else
-        echo "    \"$hname\","
-    fi
-done
+        vmx = os.path.basename(l)
+        hname = os.path.splitext(vmx)[0]
 
-echo "  ]"
-echo '}'
+        if hname.startswith('_'):
+            base_instances.append(hname[1:])
+        else:
+            instances.append(hname)
+
+    print(json.dumps({
+        '_meta': {},
+        'base_instances': base_instances,
+        'instances': instances
+    }))
