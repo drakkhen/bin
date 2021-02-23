@@ -2,10 +2,35 @@
 
 import json
 import os
+import re
 import socket
 import subprocess
 
 DOMAIN = 'vm'
+
+def grouping_of_vmx(vmx):
+    # This is meant to be a very generic grouping of OS types (i.e., linux,
+    # macOS, Windows, ..). You should use ansible_facts for more granular
+    # categorization.
+    guestos = ''
+    for l in open(vmx, 'r').readlines():
+        m = re.search(r'^guestOS\s*=\s*"?([^"]+)"?', l, re.I)
+        if m: guestos = m.group(1)
+
+    # There are many potential values, and we only care about a select few.
+    # See the full enum here: https://vmware.github.io/vsphere-automation-sdk-java/vsphere/6.5.0/vsphereautomation-client-sdk/com/vmware/vcenter/vm/GuestOS.Values.html
+    if re.search(r'CENTOS|DEBIAN|FEDORA|LINUX|MANDRAKE|REDHAT|RHEL|SUSE|UBUNTU', guestos, re.I):
+        return 'linux'
+    elif re.search(r'BSD', guestos, re.I):
+        return 'bsd'
+    elif re.search(r'DARWIN', guestos, re.I):
+        return 'macos'
+    elif re.search(r'SOLARIS', guestos, re.I):
+        return 'unix'
+    elif re.search(r'WIN(_|DOWS)', guestos, re.I):
+        return 'windows'
+    else:
+        return 'unknown'
 
 def ip_of_vmx(vmx):
     p = subprocess.run(['vmrun', 'getGuestIpAddress', vmx], capture_output=True)
@@ -32,6 +57,7 @@ def vms():
             continue
 
         ip = ip_of_vmx(vmx)
+        grouping = grouping_of_vmx(vmx)
         hostname = hostname_of_ip(ip)
 
         filename = os.path.basename(vmx)
@@ -41,23 +67,21 @@ def vms():
             'vmx': vmx,
             'ip': ip,
             'hostname': hostname,
+            'grouping': grouping,
             'is_base_instance': is_base_instance
         }
 
 
 if __name__ == '__main__':
-    base_instances = []
-    instances = []
+    res = { '_meta': {} }
 
     for vm in vms():
-        res = vm['hostname'] or vm['ip']
+        identifier = vm['hostname'] or vm['ip']
+        k = vm['grouping']
         if vm['is_base_instance']:
-            base_instances.append(res)
-        else:
-            instances.append(res)
+            k += '_base'
 
-    print(json.dumps({
-        '_meta': {},
-        'base_instances': base_instances,
-        'instances': instances
-    }))
+        if not k in res:  res[k] = []
+        res[k].append(identifier)
+
+    print(json.dumps(res))
