@@ -4,6 +4,6 @@ IFS=$(echo -en "\n\b")
 for vmx in `vmrun list | egrep -i '\.vmx$'`
 do
     hname=`basename -s .vmx $vmx`
-    ip=`vmrun getGuestIpAddress $vmx`
+    ip=`vmrun getGuestIpAddress $vmx -wait`
     echo "$ip  $hname"
 done
