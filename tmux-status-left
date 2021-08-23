@@ -59,7 +59,7 @@ battery_status () {
 DELIMITER="#[fg=#500000]|"
 
 dnd_status () {
-    defaults -currentHost read com.apple.notificationcenterui doNotDisturb | grep -q 1 && echo -n " $DELIMITER #[fg=blue,bright]DnD"
+    defaults read com.apple.controlcenter "NSStatusItem Visible DoNotDisturb" | grep -q 1 && echo -n " $DELIMITER #[fg=blue,bright]DnD"
 }
 
 echo -n "$DELIMITER #[fg=default]"
