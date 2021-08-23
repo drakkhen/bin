@@ -63,11 +63,11 @@ backup_status () {
         if [[ $(tmutil_status_value Stopping) -eq 1 ]]
         then
             echo -ne " ${STOPPING_PREFIX}Stopping${STOPPING_SUFFIX}"
-            exit
+            return
         elif [[ $(tmutil_status_value Running) -eq 1 ]]
         then
             echo -ne " ${RUNNING_PREFIX}$(tmutil_status_value BackupPhase)${RUNNING_SUFFIX}"
-            exit
+            return
         fi
     else
         # it's NOT mounted; set $latest_backup from contents of $LAST_BACKUP_TS
@@ -78,7 +78,7 @@ backup_status () {
     # make sure $latest_backup is numeric before trying to do math on it
     if [[ ! $latest_backup =~ ^-?[0-9]+$ ]]
     then
-        exit
+        return
     fi
 
     #
@@ -138,7 +138,7 @@ timezone_clock () {
 }
 
 viscosity_status
-#backup_status
+backup_status
 echo -n " #[fg=#500000]| "
 timezone_clock
 echo
