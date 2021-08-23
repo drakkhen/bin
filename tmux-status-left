@@ -1,11 +1,7 @@
 #!/bin/bash
 
 battery_status () {
-    plugged_in=$(ioreg -c AppleSmartBattery | grep ExternalConnected | sed -e 's/^.* //')
-    perc=$(ioreg -c AppleSmartBattery | egrep '"(Max|Current)Capacity"' | awk -F= '{print $2}' | sort -n | tr '\n' ' ' | awk '{printf("%.2f", $1/$2 * 100)}')
-    perc_int=${perc/.*}
-    blink_file="/tmp/.blinker"
-
+    blink_file="/tmp/.tmux-battery-status-blinker"
     blink=""
     if [[ -e $blink_file ]]; then
       blink=",reverse"
@@ -14,35 +10,50 @@ battery_status () {
       touch $blink_file
     fi
 
-    if [ $plugged_in == "Yes" ]; then
-        is_charging=$(ioreg -c AppleSmartBattery | grep IsCharging | sed -e 's/^.* //')
+    old_ifs=$IFS
+    IFS=';'
+    read -ra fullstatus <<< "$(pmset -g batt | tail -n 1 | awk -F\t '{print $2}' | awk -F\ present '{print $1}' | sed 's/; /;/g')"
+    IFS=$old_ifs
 
-        if [ $is_charging == "Yes" ]; then
-            status_color='#ff8000'
-        else
-            status_color='green,bright'
-        fi
-    else
+    perc=${fullstatus[0]//[^0-9]}
+    second_val=${fullstatus[1]}
+    third_val=${fullstatus[2]}
+
+    remaining=''
+
+    if [[ $second_val == "AC attached" ]] && [[ $third_val == "not charging" ]]; then
+        status_color='yellow'
+    elif [ $second_val == "charged" ]; then
+        status_color='green,bright'
+    elif [ $second_val == "charging" ]; then
+        status_color='#ff8000' # orange
+        remaining=${fullstatus[2]//[^0-9:]}
+    else # [ $second_val == "discharging" ]; then
         status_color='black,bright'
+        remaining=${fullstatus[2]//[^0-9:]}
     fi
 
-    if [ $perc_int -le 5 ]; then
+    if [ $perc -le 5 ]; then
         perc_color="red$blink"
-    elif [ $perc_int -le 10 ]; then
+    elif [ $perc -le 10 ]; then
         perc_color="red,reverse"
-    elif [ $perc_int -le 25 ]; then
+    elif [ $perc -le 25 ]; then
         perc_color="#ff8000"
-    elif [ $perc_int -le 50 ]; then
+    elif [ $perc -le 50 ]; then
         perc_color="yellow"
     else
         perc_color="green"
     fi
 
-    if [ $perc_int -le 5 ]; then
+    if [ $perc -le 5 ]; then
         warning="#[fg=red]⚠ "
     fi
 
-    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]$perc_int%$warning"
+    if [[ $remaining != '' ]]; then
+        remaining=" ($remaining)"
+    fi
+
+    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]${perc}%$remaining$warning"
 }
 
 DELIMITER="#[fg=#500000]|"
