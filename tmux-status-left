@@ -1,15 +1,6 @@
 #!/bin/bash
 
 battery_status () {
-    blink_file="/tmp/.tmux-battery-status-blinker"
-    blink=""
-    if [[ -e $blink_file ]]; then
-      blink=",reverse"
-      rm $blink_file
-    else
-      touch $blink_file
-    fi
-
     old_ifs=$IFS
     IFS=';'
     read -ra fullstatus <<< "$(pmset -g batt | tail -n 1 | awk -F\t '{print $2}' | awk -F\ present '{print $1}' | sed 's/; /;/g')"
@@ -34,6 +25,15 @@ battery_status () {
     fi
 
     if [ $perc -le 5 ]; then
+        blink_file="/tmp/.tmux-battery-status-blinker"
+        blink=""
+        if [[ -e $blink_file ]]; then
+          blink=",reverse"
+          rm $blink_file
+        else
+          touch $blink_file
+        fi
+
         perc_color="red$blink"
     elif [ $perc -le 10 ]; then
         perc_color="red,reverse"
@@ -46,14 +46,14 @@ battery_status () {
     fi
 
     if [ $perc -le 5 ]; then
-        warning="#[fg=red]⚠ "
+        warning="#[fg=red]⚠️  "
     fi
 
     if [[ $remaining != '' ]]; then
         remaining=" ($remaining)"
     fi
 
-    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]${perc}%$remaining$warning"
+    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]$warning${perc}%$remaining"
 }
 
 DELIMITER="#[fg=#500000]|"
