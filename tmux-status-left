@@ -2,26 +2,36 @@
 
 battery_status () {
     old_ifs=$IFS
-    IFS=';'
-    read -ra fullstatus <<< "$(pmset -g batt | tail -n 1 | awk -F\t '{print $2}' | awk -F\ present '{print $1}' | sed 's/; /;/g')"
+    IFS=";"
+    read -ra fullstatus <<< "$(pmset -g batt | sed 'N;s/\n/;/' | sed 's/\t/;/g' | awk -F\ present '{print $1}' | sed 's/; /;/g')"
     IFS=$old_ifs
 
-    perc=${fullstatus[0]//[^0-9]}
-    second_val=${fullstatus[1]}
-    third_val=${fullstatus[2]}
+    source_line=${fullstatus[0]}
+    perc=${fullstatus[2]//[^0-9]}
+    third_val=${fullstatus[3]}
+    fourth_val=${fullstatus[4]}
 
     remaining=''
+    symbol='•'
+    source=''
 
-    if [[ $second_val == "AC attached" ]] && [[ $third_val == "not charging" ]]; then
+    if [[ $source_line =~ 'AC Power' ]]; then
+        source='⏦' # 🔌
+    elif [[ $source_line =~ 'Battery Power' ]]; then
+        source='⎓' # 🔋
+    fi
+
+    if [[ $third_val == "AC attached" ]] && [[ $fourth_val == "not charging" ]]; then
         status_color='yellow'
-    elif [ $second_val == "charged" ]; then
+        symbol='Ⅱ'
+    elif [ $third_val == "charged" ]; then
         status_color='green,bright'
-    elif [ $second_val == "charging" ]; then
+    elif [ $third_val == "charging" ]; then
         status_color='#ff8000' # orange
-        remaining=${fullstatus[2]//[^0-9:]}
-    else # [ $second_val == "discharging" ]; then
+        remaining=${fourth_val//[^0-9:]}
+    else # [ $third_val == "discharging" ]; then
         status_color='black,bright'
-        remaining=${fullstatus[2]//[^0-9:]}
+        remaining=${fourth_val//[^0-9:]}
     fi
 
     if [ $perc -le 5 ]; then
@@ -53,7 +63,7 @@ battery_status () {
         remaining=" ($remaining)"
     fi
 
-    echo -n "#[fg=$status_color]• #[fg=$perc_color,nobright]$warning${perc}%$remaining"
+    echo -n "#[fg=default,bold]$source #[fg=$status_color]$symbol #[fg=$perc_color,nobright]$warning${perc}%$remaining"
 }
 
 DELIMITER="#[fg=#500000]|"
