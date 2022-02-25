@@ -131,7 +131,7 @@ timezone_clock () {
     echo -n "$(date +'%H') "
 
     TZ='America/New_York'
-    echo -n "#[fg=#ffa000]$(date +'%b%d %H:%M') "
+    echo -n "#[fg=#ffa000]$(date +'%b%d %H:%M:%S') "
 
     TZ='UTC'
     echo -n "#[fg=#ff0000,bright]$(date +'%H')"
